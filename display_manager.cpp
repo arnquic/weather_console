@@ -83,33 +83,54 @@ void drawStaticElements() {
 
 void drawNavBar() {
   display.fillRect(0, TITLE_HEIGHT, SCREEN_WIDTH, NAV_HEIGHT, COLOR_NAV_BG);
-  
-  drawButton(BUTTON_MARGIN, BUTTON_Y, "Temperature", 
-             currentView == VIEW_TEMP, COLOR_TEMP_LINE);
-  drawButton(BUTTON_MARGIN * 2 + BUTTON_WIDTH, BUTTON_Y, "Humidity", 
-             currentView == VIEW_HUMIDITY, COLOR_HUMIDITY_LINE);
-  drawButton(BUTTON_MARGIN * 3 + BUTTON_WIDTH * 2, BUTTON_Y, "Pressure", 
-             currentView == VIEW_PRESSURE, COLOR_PRESSURE_LINE);
+
+  drawHamburgerIcon();
+
+  uint16_t accentColor = getViewColor(currentView);
+  String unit = getViewUnit(currentView);
+  float avgValue;
+  getAverageValue(&avgValue);
+
+  String label = String(getViewLabel(currentView)) + "  " +
+                 String(avgValue, 1) + " " + unit + " avg";
+
+  display.setTextSize(2);
+  display.setTextColor(accentColor);
+  display.setCursor(ICON_TAP_WIDTH, (NAV_HEIGHT - 16) / 2);
+  display.print(label);
 }
 
-void drawButton(int x, int y, const char* label, bool active, uint16_t accentColor) {
-  if(active) {
-    display.fillRoundRect(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, 8, COLOR_BUTTON_ACTIVE);
-    display.drawRoundRect(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, 8, accentColor);
-  } else {
-    display.fillRoundRect(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, 8, COLOR_BUTTON_BG);
-    display.drawRoundRect(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, 8, COLOR_TEXT);
+void drawHamburgerIcon() {
+  for(int i = 0; i < 3; i++) {
+    int barY = ICON_Y + i * (ICON_BAR_HEIGHT + ICON_BAR_GAP);
+    display.fillRect(ICON_MARGIN, barY, ICON_SIZE, ICON_BAR_HEIGHT, COLOR_TEXT);
   }
-  
-  display.setTextSize(2);
-  display.setTextColor(active ? COLOR_NAV_ACTIVE : COLOR_TEXT);
-  
-  int textWidth = strlen(label) * 12;
-  int textX = x + (BUTTON_WIDTH - textWidth) / 2;
-  int textY = y + (BUTTON_HEIGHT - 16) / 2;
-  
-  display.setCursor(textX, textY);
-  display.print(label);
+}
+
+void drawDrawer() {
+  int graphY = TITLE_HEIGHT + NAV_HEIGHT + GRAPH_MARGIN;
+  int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
+  int rowHeight = graphHeight / 3;
+
+  display.fillRect(0, graphY, DRAWER_WIDTH, graphHeight, COLOR_NAV_BG);
+
+  ViewMode views[3] = { VIEW_TEMP, VIEW_HUMIDITY, VIEW_PRESSURE };
+
+  for(int i = 0; i < 3; i++) {
+    int rowY = graphY + i * rowHeight;
+    bool active = (views[i] == currentView);
+    uint16_t accentColor = getViewColor(views[i]);
+
+    display.fillRect(0, rowY, DRAWER_WIDTH, rowHeight,
+                      active ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG);
+    display.drawRect(0, rowY, DRAWER_WIDTH, rowHeight,
+                      active ? accentColor : COLOR_TEXT);
+
+    display.setTextSize(2);
+    display.setTextColor(active ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+    display.setCursor(20, rowY + rowHeight / 2 - 8);
+    display.print(getViewLabel(views[i]));
+  }
 }
 
 void drawGraph() {

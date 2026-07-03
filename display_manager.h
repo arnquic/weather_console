@@ -11,11 +11,22 @@
 #define NAV_HEIGHT 50
 #define GRAPH_MARGIN 20
 
-// Button definitions
+// Button definitions (still used by handleTouch() until Task 4 rewrites it)
 #define BUTTON_WIDTH 240
 #define BUTTON_HEIGHT 40
 #define BUTTON_MARGIN 10
 #define BUTTON_Y 5           // Buttons now at top of screen
+
+// Hamburger icon
+#define ICON_MARGIN 10
+#define ICON_SIZE 30
+#define ICON_BAR_HEIGHT 4
+#define ICON_BAR_GAP 4
+#define ICON_Y 15
+#define ICON_TAP_WIDTH 60
+
+// Drawer
+#define DRAWER_WIDTH 220
 
 // Colors
 #define COLOR_BACKGROUND 0x0000
@@ -36,7 +47,8 @@ enum ViewMode { VIEW_TEMP, VIEW_HUMIDITY, VIEW_PRESSURE };
 void initDisplay();
 void drawStaticElements();
 void drawNavBar();
-void drawButton(int x, int y, const char* label, bool active, uint16_t accentColor);
+void drawHamburgerIcon();
+void drawDrawer();
 void drawGraph();
 void handleTouch();
 ViewMode getCurrentView();
