@@ -11,12 +11,6 @@
 #define NAV_HEIGHT 50
 #define GRAPH_MARGIN 20
 
-// Button definitions (still used by handleTouch() until Task 4 rewrites it)
-#define BUTTON_WIDTH 240
-#define BUTTON_HEIGHT 40
-#define BUTTON_MARGIN 10
-#define BUTTON_Y 5           // Buttons now at top of screen
-
 // Hamburger icon
 #define ICON_MARGIN 10
 #define ICON_SIZE 30

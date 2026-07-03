@@ -6,6 +6,7 @@ Arduino_GigaDisplayTouch touchDetector;
 
 static ViewMode currentView = VIEW_TEMP;
 static bool redrawNeeded = true;
+static bool drawerOpen = false;
 
 // Touch gesture state
 static bool gestureActive = false;
@@ -272,6 +273,12 @@ void handleTouch() {
   int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
   
   if(contacts >= 2) {
+    if(drawerOpen) {
+      // Pinch/zoom is suppressed while the drawer covers the graph.
+      lastContactCount = contacts;
+      return;
+    }
+
     // Two finger gesture - pinch to zoom only
     lastMultiTouchTime = millis();
     panActive = false;  // Disable pan when doing two-finger gesture
@@ -329,22 +336,67 @@ void handleTouch() {
   }
   
   if(contacts == 1) {
-    // Single touch - button handling OR pan
+    // Single touch - icon/drawer handling OR pan
     lastSingleTouchTime = millis();  // Update single touch time
-    
+
     // Only handle if gesture has timed out
     if(gestureActive && millis() - lastMultiTouchTime < 150) {
       lastContactCount = contacts;
       return;
     }
-    
+
     // Transform coordinates for rotation
     int touchX = points[0].y;
     int touchY = 480 - points[0].x;
-    
+
+    bool onIcon = (touchX >= 0 && touchX < ICON_TAP_WIDTH &&
+                   touchY >= 0 && touchY < NAV_HEIGHT);
+
+    if(drawerOpen) {
+      // Drawer covers the graph - suppress pan, handle a single discrete tap.
+      if(!wasTouched) {
+        if(millis() - lastTouchTime < 200) {
+          lastContactCount = contacts;
+          return;
+        }
+
+        wasTouched = true;
+        lastTouchTime = millis();
+
+        if(!onIcon) {
+          bool inDrawer = (touchX >= 0 && touchX < DRAWER_WIDTH &&
+                           touchY >= graphY && touchY < graphY + graphHeight);
+
+          if(inDrawer) {
+            int rowHeight = graphHeight / 3;
+            int rowIndex = (touchY - graphY) / rowHeight;
+            ViewMode newView = currentView;
+
+            if(rowIndex == 0) newView = VIEW_TEMP;
+            else if(rowIndex == 1) newView = VIEW_HUMIDITY;
+            else newView = VIEW_PRESSURE;
+
+            if(newView != currentView) {
+              currentView = newView;
+              updateMinMaxForCurrentView();
+              Serial.print("Switched to view: ");
+              Serial.println(currentView);
+            }
+          }
+        }
+
+        drawerOpen = false;
+        drawNavBar();
+        setRedrawFlag();
+      }
+
+      lastContactCount = contacts;
+      return;
+    }
+
     // Check if touch is in graph area for panning
     bool inGraph = (touchY >= graphY && touchY <= graphY + graphHeight);
-    
+
     if(inGraph) {
       // Panning in graph area
       if(!panActive) {
@@ -386,50 +438,23 @@ void handleTouch() {
       return;
     }
     
-    // Not in graph area - check for button press
+    // Not in graph area - check for hamburger icon tap
     if(!wasTouched && !panActive) {
       if(millis() - lastTouchTime < 200) {
         lastContactCount = contacts;
         return;
       }
-      
+
       wasTouched = true;
       lastTouchTime = millis();
-      
-      Serial.print("Single touch at x: ");
-      Serial.print(touchX);
-      Serial.print(", y: ");
-      Serial.println(touchY);
-      
-      if(touchY >= BUTTON_Y && touchY <= BUTTON_Y + BUTTON_HEIGHT) {
-        ViewMode oldView = currentView;
-        
-        if(touchX >= BUTTON_MARGIN && touchX < BUTTON_MARGIN + BUTTON_WIDTH) {
-          currentView = VIEW_TEMP;
-          Serial.println("Temperature button pressed");
-        }
-        else if(touchX >= BUTTON_MARGIN * 2 + BUTTON_WIDTH && 
-                touchX < BUTTON_MARGIN * 2 + BUTTON_WIDTH * 2) {
-          currentView = VIEW_HUMIDITY;
-          Serial.println("Humidity button pressed");
-        }
-        else if(touchX >= BUTTON_MARGIN * 3 + BUTTON_WIDTH * 2 && 
-                touchX < BUTTON_MARGIN * 3 + BUTTON_WIDTH * 3) {
-          currentView = VIEW_PRESSURE;
-          Serial.println("Pressure button pressed");
-        }
-        
-        if(oldView != currentView) {
-          drawNavBar();
-          updateMinMaxForCurrentView();
-          redrawNeeded = true;
-          
-          Serial.print("Switched to view: ");
-          Serial.println(currentView);
-        }
+
+      if(onIcon) {
+        drawerOpen = true;
+        drawDrawer();
+        Serial.println("Drawer opened");
       }
     }
-    
+
     lastContactCount = contacts;
   }
   
