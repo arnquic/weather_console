@@ -1,0 +1,9 @@
+{
+  "cpu": {
+    "fqbn": "arduino:mbed_giga:giga",
+    "name": "",
+    "type": "serial"
+  },
+  "secrets": [],
+  "included_libs": []
+}
