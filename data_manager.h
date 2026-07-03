@@ -10,6 +10,7 @@ void updateHumidityData(float value);
 void updatePressureData(float value);
 void updateMinMaxForCurrentView();
 void getMinMaxValues(float* minVal, float* maxVal);
+void getAverageValue(float* avg);
 
 float* getTempData();
 float* getHumidityData();

@@ -9,6 +9,7 @@ static int currentIndex = 0;
 
 static float minValue = 0;
 static float maxValue = 100;
+static float avgValue = 0;
 
 // Zoom and pan state
 static int zoomLevel = MAX_POINTS;  // Number of points to show
@@ -103,13 +104,17 @@ void updateMinMaxForCurrentView() {
   
   minValue = data[startIdx];
   maxValue = data[startIdx];
-  
+  float sum = 0;
+
   for(int i = 0; i < pointsToCheck; i++) {
     int idx = (startIdx + i) % MAX_POINTS;
     if(data[idx] < minValue) minValue = data[idx];
     if(data[idx] > maxValue) maxValue = data[idx];
+    sum += data[idx];
   }
-  
+
+  avgValue = sum / pointsToCheck;
+
   float range = maxValue - minValue;
   if(range < 0.1) range = 10;
   minValue -= range * 0.1;
@@ -119,6 +124,10 @@ void updateMinMaxForCurrentView() {
 void getMinMaxValues(float* minVal, float* maxVal) {
   *minVal = minValue;
   *maxVal = maxValue;
+}
+
+void getAverageValue(float* avg) {
+  *avg = avgValue;
 }
 
 void setZoomLevel(int points) {
