@@ -320,7 +320,8 @@ void handleTouch() {
           float zoomFactor = (float)initialDistance / currentDistance;
           int newZoom = initialZoomLevel * zoomFactor;
           setZoomLevel(newZoom);
-          
+          drawNavBar();
+
           Serial.print("Zooming - Factor: ");
           Serial.print(zoomFactor);
           Serial.print(", New zoom: ");
@@ -419,7 +420,8 @@ void handleTouch() {
           int panDelta = -panChange / 3;  // Negative because dragging right should increase offset
           int newOffset = panStartOffset + panDelta;
           setViewOffset(newOffset);
-          
+          drawNavBar();
+
           if(absPanChange > 10) {  // Only log significant movement
             Serial.print("Panning - Change: ");
             Serial.print(panChange);
