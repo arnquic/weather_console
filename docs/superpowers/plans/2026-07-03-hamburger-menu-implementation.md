@@ -249,7 +249,9 @@ git commit -m "Add visible-window average calculation to data_manager"
 
 This task only changes drawing code — no touch handling changes yet, so `drawDrawer()` isn't invoked from anywhere until Task 4. That's expected; it will compile fine (an unused function is not an error, only unreferenced *variables* are, and this task adds no unused variables).
 
-- [ ] **Step 1: Replace the button constants in the header**
+**Important:** `handleTouch()` in `display_manager.cpp` still references `BUTTON_WIDTH`, `BUTTON_HEIGHT`, `BUTTON_MARGIN`, and `BUTTON_Y` for its old button-tap hit-testing, and is not rewritten until Task 4. Do **not** remove those macros in this task — only add the new icon/drawer macros alongside them. Removing them now would break the Task 3 compile check. Task 4 removes them once `handleTouch()` no longer needs them.
+
+- [ ] **Step 1: Add the icon/drawer constants to the header (keep the button constants for now)**
 
 In `display_manager.h`, find:
 
@@ -261,9 +263,15 @@ In `display_manager.h`, find:
 #define BUTTON_Y 5           // Buttons now at top of screen
 ```
 
-Replace with:
+Replace with (the button constants stay — `handleTouch()` still uses them until Task 4 rewrites it):
 
 ```c
+// Button definitions (still used by handleTouch() until Task 4 rewrites it)
+#define BUTTON_WIDTH 240
+#define BUTTON_HEIGHT 40
+#define BUTTON_MARGIN 10
+#define BUTTON_Y 5           // Buttons now at top of screen
+
 // Hamburger icon
 #define ICON_MARGIN 10
 #define ICON_SIZE 30
@@ -402,6 +410,7 @@ git commit -m "Draw hamburger icon and drawer panel in place of nav buttons"
 
 **Files:**
 - Modify: `display_manager.cpp` (add `drawerOpen` state; rewrite `handleTouch()`)
+- Modify: `display_manager.h` (remove the now-unused `BUTTON_*` constants, kept through Task 3 only because the old `handleTouch()` still referenced them)
 
 **Interfaces:**
 - Consumes: `drawDrawer()`, `drawHamburgerIcon()` (Task 3, via `drawNavBar()`), `ICON_TAP_WIDTH`/`DRAWER_WIDTH` (Task 3 header constants).
@@ -653,15 +662,37 @@ void handleTouch() {
 }
 ```
 
-- [ ] **Step 3: Compile to verify**
+- [ ] **Step 3: Remove the now-unused button constants from the header**
+
+`handleTouch()` no longer references `BUTTON_WIDTH`, `BUTTON_HEIGHT`, `BUTTON_MARGIN`, or `BUTTON_Y` after Step 2 — they were only kept through Task 3 because the old `handleTouch()` still used them. Now that it's rewritten, remove them.
+
+In `display_manager.h`, find:
+
+```c
+// Button definitions (still used by handleTouch() until Task 4 rewrites it)
+#define BUTTON_WIDTH 240
+#define BUTTON_HEIGHT 40
+#define BUTTON_MARGIN 10
+#define BUTTON_Y 5           // Buttons now at top of screen
+
+// Hamburger icon
+```
+
+Replace with:
+
+```c
+// Hamburger icon
+```
+
+- [ ] **Step 4: Compile to verify**
 
 Run: `arduino-cli compile --fqbn arduino:mbed_giga:giga .`
 Expected: exit code 0, no errors.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add display_manager.cpp
+git add display_manager.h display_manager.cpp
 git commit -m "Wire up hamburger icon and drawer touch handling"
 ```
 
