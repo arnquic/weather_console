@@ -14,6 +14,33 @@ static int initialZoomLevel = 0;
 static int initialPanX = 0;
 static int initialOffset = 0;
 
+static uint16_t getViewColor(ViewMode view) {
+  switch(view) {
+    case VIEW_TEMP:     return COLOR_TEMP_LINE;
+    case VIEW_HUMIDITY: return COLOR_HUMIDITY_LINE;
+    case VIEW_PRESSURE: return COLOR_PRESSURE_LINE;
+  }
+  return COLOR_TEXT;
+}
+
+static const char* getViewLabel(ViewMode view) {
+  switch(view) {
+    case VIEW_TEMP:     return "Temperature";
+    case VIEW_HUMIDITY: return "Humidity";
+    case VIEW_PRESSURE: return "Pressure";
+  }
+  return "";
+}
+
+static String getViewUnit(ViewMode view) {
+  switch(view) {
+    case VIEW_TEMP:     return "C";
+    case VIEW_HUMIDITY: return "%";
+    case VIEW_PRESSURE: return "hPa";
+  }
+  return "";
+}
+
 void initDisplay() {
   display.begin();
   display.setRotation(1);
@@ -107,26 +134,19 @@ void drawGraph() {
   
   // Get data for current view
   float* data;
-  uint16_t lineColor;
-  String unit;
-  
   switch(currentView) {
     case VIEW_TEMP:
       data = getTempData();
-      lineColor = COLOR_TEMP_LINE;
-      unit = "C";
       break;
     case VIEW_HUMIDITY:
       data = getHumidityData();
-      lineColor = COLOR_HUMIDITY_LINE;
-      unit = "%";
       break;
     case VIEW_PRESSURE:
       data = getPressureData();
-      lineColor = COLOR_PRESSURE_LINE;
-      unit = "hPa";
       break;
   }
+  uint16_t lineColor = getViewColor(currentView);
+  String unit = getViewUnit(currentView);
   
   // Use zoom level instead of all data
   int zoomLevel = getZoomLevel();
