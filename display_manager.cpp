@@ -7,6 +7,7 @@ Arduino_GigaDisplayTouch touchDetector;
 static ViewMode currentView = VIEW_TEMP;
 static bool redrawNeeded = true;
 static bool drawerOpen = false;
+static ScreenMode currentScreen = SCREEN_GRAPH;
 
 // Touch gesture state
 static bool gestureActive = false;
@@ -55,6 +56,10 @@ ViewMode getCurrentView() {
 
 void setCurrentView(ViewMode view) {
   currentView = view;
+}
+
+ScreenMode getCurrentScreen() {
+  return currentScreen;
 }
 
 bool needsRedraw() {

@@ -37,6 +37,9 @@
 // View modes
 enum ViewMode { VIEW_TEMP, VIEW_HUMIDITY, VIEW_PRESSURE };
 
+// Screens
+enum ScreenMode { SCREEN_GRAPH, SCREEN_SETTINGS };
+
 // Function declarations
 void initDisplay();
 void drawStaticElements();
@@ -48,6 +51,7 @@ void drawGraph();
 void handleTouch();
 ViewMode getCurrentView();
 void setCurrentView(ViewMode view);
+ScreenMode getCurrentScreen();
 bool needsRedraw();
 void clearRedrawFlag();
 void setRedrawFlag();
