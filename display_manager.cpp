@@ -211,7 +211,7 @@ void drawSettingsScreen() {
   display.setTextSize(2);
   display.setTextColor(COLOR_TEXT);
   display.setCursor(GRAPH_MARGIN + 20, graphY + 20);
-  display.print("Zoomed Scroll");
+  display.print("Scroll Style");
 
   int buttonY = graphY + SETTINGS_BUTTON_Y_OFFSET;
   int naturalX = GRAPH_MARGIN + SETTINGS_BUTTON_X_OFFSET;
