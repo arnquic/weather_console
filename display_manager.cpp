@@ -214,7 +214,7 @@ void drawSettingsScreen() {
   display.print("Zoomed Scroll");
 
   int buttonY = graphY + SETTINGS_BUTTON_Y_OFFSET;
-  int naturalX = GRAPH_MARGIN + 20;
+  int naturalX = GRAPH_MARGIN + SETTINGS_BUTTON_X_OFFSET;
   int classicX = naturalX + SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP;
 
   bool naturalActive = (scrollMode == SCROLL_NATURAL);
@@ -482,7 +482,7 @@ void handleTouch() {
             int rowHeight = graphHeight / 4;
             int rowIndex = (touchY - graphY) / rowHeight;
 
-            if(rowIndex == 3) {
+            if(rowIndex >= 3) {
               currentScreen = SCREEN_SETTINGS;
               currentView = VIEW_TEMP;
               updateMinMaxForCurrentView();
@@ -527,7 +527,7 @@ void handleTouch() {
         lastTouchTime = millis();
 
         int buttonY = graphY + SETTINGS_BUTTON_Y_OFFSET;
-        int naturalX = GRAPH_MARGIN + 20;
+        int naturalX = GRAPH_MARGIN + SETTINGS_BUTTON_X_OFFSET;
         int classicX = naturalX + SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP;
 
         bool inNatural = (touchX >= naturalX && touchX < naturalX + SETTINGS_BUTTON_WIDTH &&
