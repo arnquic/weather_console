@@ -9,6 +9,9 @@ static bool redrawNeeded = true;
 static bool drawerOpen = false;
 static ScreenMode currentScreen = SCREEN_GRAPH;
 
+enum ScrollMode { SCROLL_NATURAL, SCROLL_CLASSIC };
+static ScrollMode scrollMode = SCROLL_NATURAL;
+
 // Touch gesture state
 static bool gestureActive = false;
 static int initialDistance = 0;
@@ -438,8 +441,8 @@ void handleTouch() {
         int absPanChange = abs(panChange);
         
         if(absPanChange > 5) {
-          // Pan left/right - drag right = scroll back in time
-          int panDelta = -panChange / 3;  // Negative because dragging right should increase offset
+          // Pan left/right - direction depends on scrollMode
+          int panDelta = (scrollMode == SCROLL_NATURAL) ? (panChange / 3) : (-panChange / 3);
           int newOffset = panStartOffset + panDelta;
           setViewOffset(newOffset);
           drawNavBar();
