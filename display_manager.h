@@ -21,6 +21,13 @@
 
 // Drawer
 #define DRAWER_WIDTH 220
+#define GEAR_ICON_RADIUS 10
+
+// Settings screen
+#define SETTINGS_BUTTON_WIDTH 150
+#define SETTINGS_BUTTON_HEIGHT 50
+#define SETTINGS_BUTTON_GAP 20
+#define SETTINGS_BUTTON_Y_OFFSET 60
 
 // Colors
 #define COLOR_BACKGROUND 0x0000
@@ -47,6 +54,7 @@ void drawNavBar();
 void drawHamburgerIcon();
 void drawCloseIcon();
 void drawDrawer();
+void drawSettingsScreen();
 void drawGraph();
 void handleTouch();
 ViewMode getCurrentView();

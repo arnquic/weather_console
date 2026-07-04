@@ -99,6 +99,15 @@ void drawNavBar() {
     drawHamburgerIcon();
   }
 
+  display.setTextSize(2);
+
+  if(currentScreen == SCREEN_SETTINGS) {
+    display.setTextColor(COLOR_TEXT);
+    display.setCursor(ICON_TAP_WIDTH, (NAV_HEIGHT - 16) / 2);
+    display.print("Settings");
+    return;
+  }
+
   uint16_t accentColor = getViewColor(currentView);
   String unit = getViewUnit(currentView);
   float avgValue;
@@ -107,7 +116,6 @@ void drawNavBar() {
   String label = String(getViewLabel(currentView)) + "  " +
                  String(avgValue, 1) + " " + unit + " avg";
 
-  display.setTextSize(2);
   display.setTextColor(accentColor);
   display.setCursor(ICON_TAP_WIDTH, (NAV_HEIGHT - 16) / 2);
   display.print(label);
@@ -133,10 +141,21 @@ void drawCloseIcon() {
   }
 }
 
+void drawGearIcon(int cx, int cy, uint16_t color, uint16_t bgColor) {
+  display.fillCircle(cx, cy, GEAR_ICON_RADIUS, color);
+  display.fillCircle(cx, cy, GEAR_ICON_RADIUS / 2, bgColor);
+
+  int toothSize = 4;
+  display.fillRect(cx - toothSize / 2, cy - GEAR_ICON_RADIUS - toothSize / 2, toothSize, toothSize, color);
+  display.fillRect(cx - toothSize / 2, cy + GEAR_ICON_RADIUS - toothSize / 2, toothSize, toothSize, color);
+  display.fillRect(cx - GEAR_ICON_RADIUS - toothSize / 2, cy - toothSize / 2, toothSize, toothSize, color);
+  display.fillRect(cx + GEAR_ICON_RADIUS - toothSize / 2, cy - toothSize / 2, toothSize, toothSize, color);
+}
+
 void drawDrawer() {
   int graphY = TITLE_HEIGHT + NAV_HEIGHT + GRAPH_MARGIN;
   int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
-  int rowHeight = graphHeight / 3;
+  int rowHeight = graphHeight / 4;
 
   display.fillRect(0, graphY, DRAWER_WIDTH, graphHeight, COLOR_NAV_BG);
 
@@ -144,7 +163,7 @@ void drawDrawer() {
 
   for(int i = 0; i < 3; i++) {
     int rowY = graphY + i * rowHeight;
-    bool active = (views[i] == currentView);
+    bool active = (currentScreen == SCREEN_GRAPH && views[i] == currentView);
     uint16_t accentColor = getViewColor(views[i]);
 
     display.fillRect(0, rowY, DRAWER_WIDTH, rowHeight,
@@ -157,6 +176,69 @@ void drawDrawer() {
     display.setCursor(20, rowY + rowHeight / 2 - 8);
     display.print(getViewLabel(views[i]));
   }
+
+  // Settings row (4th row) - no accent color of its own, so it uses the
+  // plain active/inactive styling plus a gear icon to stand out.
+  int settingsRowY = graphY + 3 * rowHeight;
+  bool settingsActive = (currentScreen == SCREEN_SETTINGS);
+  uint16_t settingsBg = settingsActive ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG;
+  uint16_t settingsFg = settingsActive ? COLOR_NAV_ACTIVE : COLOR_TEXT;
+
+  display.fillRect(0, settingsRowY, DRAWER_WIDTH, rowHeight, settingsBg);
+  display.drawRect(0, settingsRowY, DRAWER_WIDTH, rowHeight, COLOR_TEXT);
+
+  int gearCx = 20 + GEAR_ICON_RADIUS;
+  int gearCy = settingsRowY + rowHeight / 2;
+  drawGearIcon(gearCx, gearCy, settingsFg, settingsBg);
+
+  display.setTextSize(2);
+  display.setTextColor(settingsFg);
+  display.setCursor(gearCx + GEAR_ICON_RADIUS + 10, settingsRowY + rowHeight / 2 - 8);
+  display.print("Settings");
+}
+
+void drawSettingsScreen() {
+  int graphY = TITLE_HEIGHT + NAV_HEIGHT + GRAPH_MARGIN;
+  int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
+  int graphWidth = SCREEN_WIDTH - 2 * GRAPH_MARGIN;
+
+  // Clear settings area
+  display.fillRect(GRAPH_MARGIN + 1, graphY + 1,
+                   graphWidth - 2, graphHeight - 2, COLOR_BACKGROUND);
+
+  display.setTextSize(2);
+  display.setTextColor(COLOR_TEXT);
+  display.setCursor(GRAPH_MARGIN + 20, graphY + 20);
+  display.print("Zoomed Scroll");
+
+  int buttonY = graphY + SETTINGS_BUTTON_Y_OFFSET;
+  int naturalX = GRAPH_MARGIN + 20;
+  int classicX = naturalX + SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP;
+
+  bool naturalActive = (scrollMode == SCROLL_NATURAL);
+  bool classicActive = (scrollMode == SCROLL_CLASSIC);
+
+  display.fillRoundRect(naturalX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
+                         naturalActive ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG);
+  display.drawRoundRect(naturalX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
+                         naturalActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+
+  display.fillRoundRect(classicX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
+                         classicActive ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG);
+  display.drawRoundRect(classicX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
+                         classicActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+
+  display.setTextSize(2);
+  display.setTextColor(naturalActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+  display.setCursor(naturalX + 20, buttonY + 17);
+  display.print("Natural");
+
+  display.setTextColor(classicActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+  display.setCursor(classicX + 20, buttonY + 17);
+  display.print("Classic");
+
+  // Restore frame border in case anything touched the edge pixels
+  display.drawRect(GRAPH_MARGIN, graphY, graphWidth, graphHeight, COLOR_TEXT);
 }
 
 void drawGraph() {
