@@ -202,7 +202,9 @@ void drawSettingsScreen() {
   int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
   int graphWidth = SCREEN_WIDTH - 2 * GRAPH_MARGIN;
 
-  // Clear settings area
+  // Clear settings area, including the margin strip to the left of the
+  // frame (the drawer paints all the way to x=0, wider than GRAPH_MARGIN).
+  display.fillRect(0, graphY, GRAPH_MARGIN, graphHeight, COLOR_BACKGROUND);
   display.fillRect(GRAPH_MARGIN + 1, graphY + 1,
                    graphWidth - 2, graphHeight - 2, COLOR_BACKGROUND);
 
