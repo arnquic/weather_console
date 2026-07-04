@@ -380,8 +380,9 @@ void handleTouch() {
   int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
   
   if(contacts >= 2) {
-    if(drawerOpen) {
-      // Pinch/zoom is suppressed while the drawer covers the graph.
+    if(drawerOpen || currentScreen != SCREEN_GRAPH) {
+      // Pinch/zoom is suppressed while the drawer covers the graph,
+      // or while a non-graph screen (e.g. Settings) is showing.
       lastContactCount = contacts;
       return;
     }
@@ -476,15 +477,22 @@ void handleTouch() {
                            touchY >= graphY && touchY < graphY + graphHeight);
 
           if(inDrawer) {
-            int rowHeight = graphHeight / 3;
+            int rowHeight = graphHeight / 4;
             int rowIndex = (touchY - graphY) / rowHeight;
-            ViewMode newView = currentView;
 
-            if(rowIndex == 0) newView = VIEW_TEMP;
-            else if(rowIndex == 1) newView = VIEW_HUMIDITY;
-            else newView = VIEW_PRESSURE;
+            if(rowIndex == 3) {
+              currentScreen = SCREEN_SETTINGS;
+              currentView = VIEW_TEMP;
+              updateMinMaxForCurrentView();
+              Serial.println("Switched to Settings");
+            } else {
+              ViewMode newView = currentView;
 
-            if(newView != currentView) {
+              if(rowIndex == 0) newView = VIEW_TEMP;
+              else if(rowIndex == 1) newView = VIEW_HUMIDITY;
+              else newView = VIEW_PRESSURE;
+
+              currentScreen = SCREEN_GRAPH;
               currentView = newView;
               updateMinMaxForCurrentView();
               Serial.print("Switched to view: ");
@@ -502,10 +510,45 @@ void handleTouch() {
       return;
     }
 
-    // Check if touch is in graph area for panning
+    // Check if touch is in the content area (graph or settings screen)
     bool inGraph = (touchY >= graphY && touchY <= graphY + graphHeight);
 
-    if(inGraph) {
+    if(inGraph && currentScreen == SCREEN_SETTINGS) {
+      // Settings screen - hit-test the Natural/Classic buttons.
+      if(!wasTouched) {
+        if(millis() - lastTouchTime < 200) {
+          lastContactCount = contacts;
+          return;
+        }
+
+        wasTouched = true;
+        lastTouchTime = millis();
+
+        int buttonY = graphY + SETTINGS_BUTTON_Y_OFFSET;
+        int naturalX = GRAPH_MARGIN + 20;
+        int classicX = naturalX + SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP;
+
+        bool inNatural = (touchX >= naturalX && touchX < naturalX + SETTINGS_BUTTON_WIDTH &&
+                          touchY >= buttonY && touchY < buttonY + SETTINGS_BUTTON_HEIGHT);
+        bool inClassic = (touchX >= classicX && touchX < classicX + SETTINGS_BUTTON_WIDTH &&
+                          touchY >= buttonY && touchY < buttonY + SETTINGS_BUTTON_HEIGHT);
+
+        if(inNatural) {
+          scrollMode = SCROLL_NATURAL;
+          setRedrawFlag();
+          Serial.println("Zoomed scroll set to Natural");
+        } else if(inClassic) {
+          scrollMode = SCROLL_CLASSIC;
+          setRedrawFlag();
+          Serial.println("Zoomed scroll set to Classic");
+        }
+      }
+
+      lastContactCount = contacts;
+      return;
+    }
+
+    if(inGraph && currentScreen == SCREEN_GRAPH) {
       // Panning in graph area
       if(!panActive) {
         // Start pan

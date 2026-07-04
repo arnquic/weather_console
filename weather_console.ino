@@ -31,7 +31,11 @@ void loop() {
   handleTouch();
   
   if(needsRedraw()) {
-    drawGraph();
+    if(getCurrentScreen() == SCREEN_SETTINGS) {
+      drawSettingsScreen();
+    } else {
+      drawGraph();
+    }
     clearRedrawFlag();
   }
 }
