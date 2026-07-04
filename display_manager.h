@@ -42,6 +42,7 @@ void initDisplay();
 void drawStaticElements();
 void drawNavBar();
 void drawHamburgerIcon();
+void drawCloseIcon();
 void drawDrawer();
 void drawGraph();
 void handleTouch();

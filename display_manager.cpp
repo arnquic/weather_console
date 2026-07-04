@@ -85,7 +85,11 @@ void drawStaticElements() {
 void drawNavBar() {
   display.fillRect(0, TITLE_HEIGHT, SCREEN_WIDTH, NAV_HEIGHT, COLOR_NAV_BG);
 
-  drawHamburgerIcon();
+  if(drawerOpen) {
+    drawCloseIcon();
+  } else {
+    drawHamburgerIcon();
+  }
 
   uint16_t accentColor = getViewColor(currentView);
   String unit = getViewUnit(currentView);
@@ -105,6 +109,19 @@ void drawHamburgerIcon() {
   for(int i = 0; i < 3; i++) {
     int barY = ICON_Y + i * (ICON_BAR_HEIGHT + ICON_BAR_GAP);
     display.fillRect(ICON_MARGIN, barY, ICON_SIZE, ICON_BAR_HEIGHT, COLOR_TEXT);
+  }
+}
+
+void drawCloseIcon() {
+  int iconHeight = 3 * ICON_BAR_HEIGHT + 2 * ICON_BAR_GAP;
+  int x1 = ICON_MARGIN;
+  int y1 = ICON_Y;
+  int x2 = ICON_MARGIN + iconHeight;
+  int y2 = ICON_Y + iconHeight;
+
+  for(int offset = -1; offset <= 1; offset++) {
+    display.drawLine(x1 + offset, y1, x2 + offset, y2, COLOR_TEXT);
+    display.drawLine(x2 + offset, y1, x1 + offset, y2, COLOR_TEXT);
   }
 }
 
@@ -452,6 +469,7 @@ void handleTouch() {
 
       if(onIcon) {
         drawerOpen = true;
+        drawNavBar();
         drawDrawer();
         Serial.println("Drawer opened");
       }
