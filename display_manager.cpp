@@ -1,5 +1,6 @@
 #include "display_manager.h"
 #include "data_manager.h"
+#include "settings_manager.h"
 
 GigaDisplay_GFX display;
 Arduino_GigaDisplayTouch touchDetector;
@@ -8,9 +9,6 @@ static ViewMode currentView = VIEW_TEMP;
 static bool redrawNeeded = true;
 static bool drawerOpen = false;
 static ScreenMode currentScreen = SCREEN_GRAPH;
-
-enum ScrollMode { SCROLL_NATURAL, SCROLL_CLASSIC };
-static ScrollMode scrollMode = SCROLL_NATURAL;
 
 // Touch gesture state
 static bool gestureActive = false;
@@ -197,6 +195,28 @@ void drawDrawer() {
   display.print("Settings");
 }
 
+struct SettingRow {
+  const char* label;
+  const char** options;
+  uint8_t optionCount;
+  uint8_t currentIndex;
+  void (*onSelect)(uint8_t index);
+};
+
+static void applyScrollMode(uint8_t i)   { setScrollMode((ScrollMode)i); }
+static void applyTempUnit(uint8_t i)     { setTemperatureUnit((TemperatureUnit)i); }
+static void applyPressureUnit(uint8_t i) { setPressureUnit((PressureUnit)i); }
+
+static void getSettingRows(SettingRow rows[3]) {
+  static const char* scrollOpts[]   = {"Natural", "Classic"};
+  static const char* tempOpts[]     = {"F", "C"};
+  static const char* pressureOpts[] = {"hPa", "mmHg", "psi"};
+
+  rows[0] = { "Scroll Style",     scrollOpts,   2, (uint8_t)getScrollMode(),      applyScrollMode };
+  rows[1] = { "Temperature Unit", tempOpts,     2, (uint8_t)getTemperatureUnit(), applyTempUnit };
+  rows[2] = { "Pressure Unit",    pressureOpts, 3, (uint8_t)getPressureUnit(),    applyPressureUnit };
+}
+
 void drawSettingsScreen() {
   int graphY = TITLE_HEIGHT + NAV_HEIGHT + GRAPH_MARGIN;
   int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
@@ -208,36 +228,35 @@ void drawSettingsScreen() {
   display.fillRect(GRAPH_MARGIN + 1, graphY + 1,
                    graphWidth - 2, graphHeight - 2, COLOR_BACKGROUND);
 
-  display.setTextSize(2);
-  display.setTextColor(COLOR_TEXT);
-  display.setCursor(GRAPH_MARGIN + 20, graphY + 20);
-  display.print("Scroll Style");
+  SettingRow rows[3];
+  getSettingRows(rows);
 
-  int buttonY = graphY + SETTINGS_BUTTON_Y_OFFSET;
-  int naturalX = GRAPH_MARGIN + SETTINGS_BUTTON_X_OFFSET;
-  int classicX = naturalX + SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP;
+  for(int r = 0; r < 3; r++) {
+    int rowTop = graphY + r * SETTINGS_ROW_HEIGHT;
 
-  bool naturalActive = (scrollMode == SCROLL_NATURAL);
-  bool classicActive = (scrollMode == SCROLL_CLASSIC);
+    display.setTextSize(2);
+    display.setTextColor(COLOR_TEXT);
+    display.setCursor(GRAPH_MARGIN + 20, rowTop + 20);
+    display.print(rows[r].label);
 
-  display.fillRoundRect(naturalX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
-                         naturalActive ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG);
-  display.drawRoundRect(naturalX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
-                         naturalActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+    int buttonY = rowTop + SETTINGS_BUTTON_Y_OFFSET;
 
-  display.fillRoundRect(classicX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
-                         classicActive ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG);
-  display.drawRoundRect(classicX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
-                         classicActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+    for(int i = 0; i < rows[r].optionCount; i++) {
+      int buttonX = GRAPH_MARGIN + SETTINGS_BUTTON_X_OFFSET +
+                    i * (SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP);
+      bool active = (i == rows[r].currentIndex);
 
-  display.setTextSize(2);
-  display.setTextColor(naturalActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
-  display.setCursor(naturalX + 20, buttonY + 17);
-  display.print("Natural");
+      display.fillRoundRect(buttonX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
+                             active ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG);
+      display.drawRoundRect(buttonX, buttonY, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT, 8,
+                             active ? COLOR_NAV_ACTIVE : COLOR_TEXT);
 
-  display.setTextColor(classicActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
-  display.setCursor(classicX + 20, buttonY + 17);
-  display.print("Classic");
+      display.setTextSize(2);
+      display.setTextColor(active ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+      display.setCursor(buttonX + 20, buttonY + 17);
+      display.print(rows[r].options[i]);
+    }
+  }
 
   // Restore frame border in case anything touched the edge pixels
   display.drawRect(GRAPH_MARGIN, graphY, graphWidth, graphHeight, COLOR_TEXT);
@@ -516,7 +535,7 @@ void handleTouch() {
     bool inGraph = (touchY >= graphY && touchY <= graphY + graphHeight);
 
     if(inGraph && currentScreen == SCREEN_SETTINGS) {
-      // Settings screen - hit-test the Natural/Classic buttons.
+      // Settings screen - hit-test each row's option buttons.
       if(!wasTouched) {
         if(millis() - lastTouchTime < 200) {
           lastContactCount = contacts;
@@ -526,23 +545,33 @@ void handleTouch() {
         wasTouched = true;
         lastTouchTime = millis();
 
-        int buttonY = graphY + SETTINGS_BUTTON_Y_OFFSET;
-        int naturalX = GRAPH_MARGIN + SETTINGS_BUTTON_X_OFFSET;
-        int classicX = naturalX + SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP;
+        SettingRow rows[3];
+        getSettingRows(rows);
 
-        bool inNatural = (touchX >= naturalX && touchX < naturalX + SETTINGS_BUTTON_WIDTH &&
-                          touchY >= buttonY && touchY < buttonY + SETTINGS_BUTTON_HEIGHT);
-        bool inClassic = (touchX >= classicX && touchX < classicX + SETTINGS_BUTTON_WIDTH &&
-                          touchY >= buttonY && touchY < buttonY + SETTINGS_BUTTON_HEIGHT);
+        for(int r = 0; r < 3; r++) {
+          int rowTop = graphY + r * SETTINGS_ROW_HEIGHT;
+          int buttonY = rowTop + SETTINGS_BUTTON_Y_OFFSET;
 
-        if(inNatural) {
-          scrollMode = SCROLL_NATURAL;
-          setRedrawFlag();
-          Serial.println("Zoomed scroll set to Natural");
-        } else if(inClassic) {
-          scrollMode = SCROLL_CLASSIC;
-          setRedrawFlag();
-          Serial.println("Zoomed scroll set to Classic");
+          if(touchY < buttonY || touchY >= buttonY + SETTINGS_BUTTON_HEIGHT) {
+            continue;
+          }
+
+          for(int i = 0; i < rows[r].optionCount; i++) {
+            int buttonX = GRAPH_MARGIN + SETTINGS_BUTTON_X_OFFSET +
+                          i * (SETTINGS_BUTTON_WIDTH + SETTINGS_BUTTON_GAP);
+
+            if(touchX >= buttonX && touchX < buttonX + SETTINGS_BUTTON_WIDTH) {
+              rows[r].onSelect(i);
+              setRedrawFlag();
+              Serial.print("Settings row ");
+              Serial.print(r);
+              Serial.print(" set to option ");
+              Serial.println(i);
+              break;
+            }
+          }
+
+          break;
         }
       }
 
@@ -569,7 +598,7 @@ void handleTouch() {
         
         if(absPanChange > 5) {
           // Pan left/right - direction depends on scrollMode
-          int panDelta = (scrollMode == SCROLL_NATURAL) ? (panChange / 3) : (-panChange / 3);
+          int panDelta = (getScrollMode() == SCROLL_NATURAL) ? (panChange / 3) : (-panChange / 3);
           int newOffset = panStartOffset + panDelta;
           setViewOffset(newOffset);
           drawNavBar();
