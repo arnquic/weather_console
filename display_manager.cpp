@@ -39,7 +39,7 @@ static const char* getViewLabel(ViewMode view) {
 
 static String getViewUnit(ViewMode view) {
   switch(view) {
-    case VIEW_TEMP:     return "C";
+    case VIEW_TEMP:     return "F";
     case VIEW_HUMIDITY: return "%";
     case VIEW_PRESSURE: return "hPa";
   }
