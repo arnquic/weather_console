@@ -130,6 +130,26 @@ void getAverageValue(float* avg) {
   *avg = avgValue;
 }
 
+void getFullBufferAverages(float* tempAvg, float* humidityAvg, float* pressureAvg) {
+  if(dataCount == 0) {
+    *tempAvg = 0;
+    *humidityAvg = 0;
+    *pressureAvg = 0;
+    return;
+  }
+
+  float tempSum = 0, humiditySum = 0, pressureSum = 0;
+  for(int i = 0; i < dataCount; i++) {
+    tempSum += tempData[i];
+    humiditySum += humidityData[i];
+    pressureSum += pressureData[i];
+  }
+
+  *tempAvg = tempSum / dataCount;
+  *humidityAvg = humiditySum / dataCount;
+  *pressureAvg = pressureSum / dataCount;
+}
+
 void setZoomLevel(int points) {
   int maxZoom = min(MAX_POINTS, dataCount);
   zoomLevel = constrain(points, MIN_ZOOM_POINTS, maxZoom);

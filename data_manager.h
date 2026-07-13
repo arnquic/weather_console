@@ -11,6 +11,7 @@ void updatePressureData(float value);
 void updateMinMaxForCurrentView();
 void getMinMaxValues(float* minVal, float* maxVal);
 void getAverageValue(float* avg);
+void getFullBufferAverages(float* tempAvg, float* humidityAvg, float* pressureAvg);
 
 float* getTempData();
 float* getHumidityData();
