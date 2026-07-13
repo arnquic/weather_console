@@ -5,11 +5,15 @@
 #include "thingProperties.h"
 #include "display_manager.h"
 #include "data_manager.h"
+#include "settings_manager.h"
 
 void setup() {
   Serial.begin(9600);
-  delay(1500); 
-  
+  delay(1500);
+
+  // Load persisted settings before first draw
+  loadSettings();
+
   // Initialize display and touch
   initDisplay();
   
