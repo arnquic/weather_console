@@ -37,11 +37,38 @@ static const char* getViewLabel(ViewMode view) {
 
 static String getViewUnit(ViewMode view) {
   switch(view) {
-    case VIEW_TEMP:     return "F";
-    case VIEW_HUMIDITY: return "%";
-    case VIEW_PRESSURE: return "hPa";
+    case VIEW_TEMP:
+      return (getTemperatureUnit() == TEMP_UNIT_C) ? "C" : "F";
+    case VIEW_HUMIDITY:
+      return "%";
+    case VIEW_PRESSURE:
+      switch(getPressureUnit()) {
+        case PRESSURE_UNIT_MMHG: return "mmHg";
+        case PRESSURE_UNIT_PSI:  return "psi";
+        default:                 return "hPa";
+      }
   }
   return "";
+}
+
+static float convertTempForDisplay(float rawF) {
+  return (getTemperatureUnit() == TEMP_UNIT_C) ? (rawF - 32) * 5.0 / 9.0 : rawF;
+}
+
+static float convertPressureForDisplay(float rawHpa) {
+  switch(getPressureUnit()) {
+    case PRESSURE_UNIT_MMHG: return rawHpa * 0.750062;
+    case PRESSURE_UNIT_PSI:  return rawHpa * 0.0145038;
+    default:                 return rawHpa; // hPa
+  }
+}
+
+static float convertForCurrentView(ViewMode view, float rawValue) {
+  switch(view) {
+    case VIEW_TEMP:     return convertTempForDisplay(rawValue);
+    case VIEW_PRESSURE: return convertPressureForDisplay(rawValue);
+    default:            return rawValue; // Humidity: no conversion
+  }
 }
 
 void initDisplay() {
@@ -110,9 +137,10 @@ void drawNavBar() {
   String unit = getViewUnit(currentView);
   float avgValue;
   getAverageValue(&avgValue);
+  float displayAvg = convertForCurrentView(currentView, avgValue);
 
   String label = String(getViewLabel(currentView)) + "  " +
-                 String(avgValue, 1) + " " + unit + " avg";
+                 String(displayAvg, 1) + " " + unit + " avg";
 
   display.setTextColor(accentColor);
   display.setCursor(ICON_TAP_WIDTH, (NAV_HEIGHT - 16) / 2);
@@ -355,16 +383,16 @@ void drawGraph() {
   display.setTextSize(1);
   display.setTextColor(COLOR_TEXT);
   display.setCursor(5, graphY);
-  display.print(String(maxValue, 1));
+  display.print(String(convertForCurrentView(currentView, maxValue), 1));
   display.setCursor(5, graphY + graphHeight - 10);
-  display.print(String(minValue, 1));
-  
+  display.print(String(convertForCurrentView(currentView, minValue), 1));
+
   // Display current value (rightmost visible point)
   int latestIdx = (startIdx + pointsToPlot - 1) % getMaxPoints();
   display.setTextSize(3);
   display.setCursor(GRAPH_MARGIN + 10, graphY + 10);
   display.setTextColor(lineColor);
-  display.print(String(data[latestIdx], 1) + " " + unit);
+  display.print(String(convertForCurrentView(currentView, data[latestIdx]), 1) + " " + unit);
   
   // Show zoom indicator if zoomed
   if(zoomLevel < dataCount) {
