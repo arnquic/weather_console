@@ -625,7 +625,7 @@ void handleTouch() {
         int absPanChange = abs(panChange);
         
         if(absPanChange > 5) {
-          // Pan left/right - direction depends on scrollMode
+          // Pan left/right - direction depends on the scroll mode setting
           int panDelta = (getScrollMode() == SCROLL_NATURAL) ? (panChange / 3) : (-panChange / 3);
           int newOffset = panStartOffset + panDelta;
           setViewOffset(newOffset);
