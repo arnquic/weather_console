@@ -334,12 +334,14 @@ void drawDashboardScreen() {
   ViewMode views[3] = { VIEW_TEMP, VIEW_HUMIDITY, VIEW_PRESSURE };
   float rawAverages[3] = { tempAvg, humidityAvg, pressureAvg };
 
-  int cardWidth = (graphWidth - 2 * DASHBOARD_CARD_GAP) / 3;
+  int cardsLeft = GRAPH_MARGIN + GRAPH_MARGIN;
+  int cardsWidth = graphWidth - 2 * GRAPH_MARGIN;
+  int cardWidth = (cardsWidth - 2 * DASHBOARD_CARD_GAP) / 3;
   int cardHeight = graphHeight - 2 * GRAPH_MARGIN;
   int cardTop = graphY + GRAPH_MARGIN;
 
   for(int i = 0; i < 3; i++) {
-    int cardX = GRAPH_MARGIN + i * (cardWidth + DASHBOARD_CARD_GAP);
+    int cardX = cardsLeft + i * (cardWidth + DASHBOARD_CARD_GAP);
     uint16_t accentColor = getViewColor(views[i]);
 
     display.drawRoundRect(cardX, cardTop, cardWidth, cardHeight, 8, accentColor);
