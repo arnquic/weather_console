@@ -37,6 +37,8 @@ void loop() {
   if(needsRedraw()) {
     if(getCurrentScreen() == SCREEN_SETTINGS) {
       drawSettingsScreen();
+    } else if(getCurrentScreen() == SCREEN_DASHBOARD) {
+      drawDashboardScreen();
     } else {
       drawGraph();
     }

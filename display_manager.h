@@ -31,6 +31,9 @@
 #define SETTINGS_BUTTON_X_OFFSET 20
 #define SETTINGS_ROW_HEIGHT 120
 
+// Dashboard screen
+#define DASHBOARD_CARD_GAP 20
+
 // Colors
 #define COLOR_BACKGROUND 0x0000
 #define COLOR_TITLE_BG 0x001F
@@ -47,7 +50,7 @@
 enum ViewMode { VIEW_TEMP, VIEW_HUMIDITY, VIEW_PRESSURE };
 
 // Screens
-enum ScreenMode { SCREEN_GRAPH, SCREEN_SETTINGS };
+enum ScreenMode { SCREEN_GRAPH, SCREEN_SETTINGS, SCREEN_DASHBOARD };
 
 // Function declarations
 void initDisplay();
@@ -57,6 +60,7 @@ void drawHamburgerIcon();
 void drawCloseIcon();
 void drawDrawer();
 void drawSettingsScreen();
+void drawDashboardScreen();
 void drawGraph();
 void handleTouch();
 ViewMode getCurrentView();

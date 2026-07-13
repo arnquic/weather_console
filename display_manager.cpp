@@ -133,6 +133,13 @@ void drawNavBar() {
     return;
   }
 
+  if(currentScreen == SCREEN_DASHBOARD) {
+    display.setTextColor(COLOR_TEXT);
+    display.setCursor(ICON_TAP_WIDTH, (NAV_HEIGHT - 16) / 2);
+    display.print("Dashboard");
+    return;
+  }
+
   uint16_t accentColor = getViewColor(currentView);
   String unit = getViewUnit(currentView);
   float avgValue;
@@ -181,14 +188,25 @@ void drawGearIcon(int cx, int cy, uint16_t color, uint16_t bgColor) {
 void drawDrawer() {
   int graphY = TITLE_HEIGHT + NAV_HEIGHT + GRAPH_MARGIN;
   int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
-  int rowHeight = graphHeight / 4;
+  int rowHeight = graphHeight / 5;
 
   display.fillRect(0, graphY, DRAWER_WIDTH, graphHeight, COLOR_NAV_BG);
+
+  // Row 0: Dashboard - plain label, no per-view accent color (Dashboard
+  // has no single ViewMode to color itself with).
+  bool dashboardActive = (currentScreen == SCREEN_DASHBOARD);
+  display.fillRect(0, graphY, DRAWER_WIDTH, rowHeight,
+                    dashboardActive ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG);
+  display.drawRect(0, graphY, DRAWER_WIDTH, rowHeight, COLOR_TEXT);
+  display.setTextSize(2);
+  display.setTextColor(dashboardActive ? COLOR_NAV_ACTIVE : COLOR_TEXT);
+  display.setCursor(20, graphY + rowHeight / 2 - 8);
+  display.print("Dashboard");
 
   ViewMode views[3] = { VIEW_TEMP, VIEW_HUMIDITY, VIEW_PRESSURE };
 
   for(int i = 0; i < 3; i++) {
-    int rowY = graphY + i * rowHeight;
+    int rowY = graphY + (i + 1) * rowHeight;
     bool active = (currentScreen == SCREEN_GRAPH && views[i] == currentView);
     uint16_t accentColor = getViewColor(views[i]);
 
@@ -203,9 +221,9 @@ void drawDrawer() {
     display.print(getViewLabel(views[i]));
   }
 
-  // Settings row (4th row) - no accent color of its own, so it uses the
+  // Settings row (5th row) - no accent color of its own, so it uses the
   // plain active/inactive styling plus a gear icon to stand out.
-  int settingsRowY = graphY + 3 * rowHeight;
+  int settingsRowY = graphY + 4 * rowHeight;
   bool settingsActive = (currentScreen == SCREEN_SETTINGS);
   uint16_t settingsBg = settingsActive ? COLOR_BUTTON_ACTIVE : COLOR_BUTTON_BG;
   uint16_t settingsFg = settingsActive ? COLOR_NAV_ACTIVE : COLOR_TEXT;
@@ -287,6 +305,25 @@ void drawSettingsScreen() {
   }
 
   // Restore frame border in case anything touched the edge pixels
+  display.drawRect(GRAPH_MARGIN, graphY, graphWidth, graphHeight, COLOR_TEXT);
+}
+
+void drawDashboardScreen() {
+  int graphY = TITLE_HEIGHT + NAV_HEIGHT + GRAPH_MARGIN;
+  int graphHeight = SCREEN_HEIGHT - graphY - GRAPH_MARGIN;
+  int graphWidth = SCREEN_WIDTH - 2 * GRAPH_MARGIN;
+
+  // Clear dashboard area, including the margin strip to the left of the
+  // frame (the drawer paints all the way to x=0, wider than GRAPH_MARGIN).
+  display.fillRect(0, graphY, GRAPH_MARGIN, graphHeight, COLOR_BACKGROUND);
+  display.fillRect(GRAPH_MARGIN + 1, graphY + 1,
+                   graphWidth - 2, graphHeight - 2, COLOR_BACKGROUND);
+
+  display.setTextSize(2);
+  display.setTextColor(COLOR_TEXT);
+  display.setCursor(SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2);
+  display.print("Dashboard");
+
   display.drawRect(GRAPH_MARGIN, graphY, graphWidth, graphHeight, COLOR_TEXT);
 }
 
@@ -526,19 +563,22 @@ void handleTouch() {
                            touchY >= graphY && touchY < graphY + graphHeight);
 
           if(inDrawer) {
-            int rowHeight = graphHeight / 4;
+            int rowHeight = graphHeight / 5;
             int rowIndex = (touchY - graphY) / rowHeight;
 
-            if(rowIndex >= 3) {
+            if(rowIndex >= 4) {
               currentScreen = SCREEN_SETTINGS;
               currentView = VIEW_TEMP;
               updateMinMaxForCurrentView();
               Serial.println("Switched to Settings");
+            } else if(rowIndex == 0) {
+              currentScreen = SCREEN_DASHBOARD;
+              Serial.println("Switched to Dashboard");
             } else {
               ViewMode newView = currentView;
 
-              if(rowIndex == 0) newView = VIEW_TEMP;
-              else if(rowIndex == 1) newView = VIEW_HUMIDITY;
+              if(rowIndex == 1) newView = VIEW_TEMP;
+              else if(rowIndex == 2) newView = VIEW_HUMIDITY;
               else newView = VIEW_PRESSURE;
 
               currentScreen = SCREEN_GRAPH;
