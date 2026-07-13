@@ -319,11 +319,48 @@ void drawDashboardScreen() {
   display.fillRect(GRAPH_MARGIN + 1, graphY + 1,
                    graphWidth - 2, graphHeight - 2, COLOR_BACKGROUND);
 
-  display.setTextSize(2);
-  display.setTextColor(COLOR_TEXT);
-  display.setCursor(SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2);
-  display.print("Dashboard");
+  if(getDataCount() == 0) {
+    display.setTextSize(2);
+    display.setTextColor(COLOR_TEXT);
+    display.setCursor(SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2);
+    display.print("Waiting for data...");
+    display.drawRect(GRAPH_MARGIN, graphY, graphWidth, graphHeight, COLOR_TEXT);
+    return;
+  }
 
+  float tempAvg, humidityAvg, pressureAvg;
+  getFullBufferAverages(&tempAvg, &humidityAvg, &pressureAvg);
+
+  ViewMode views[3] = { VIEW_TEMP, VIEW_HUMIDITY, VIEW_PRESSURE };
+  float rawAverages[3] = { tempAvg, humidityAvg, pressureAvg };
+
+  int cardWidth = (graphWidth - 2 * DASHBOARD_CARD_GAP) / 3;
+  int cardHeight = graphHeight - 2 * GRAPH_MARGIN;
+  int cardTop = graphY + GRAPH_MARGIN;
+
+  for(int i = 0; i < 3; i++) {
+    int cardX = GRAPH_MARGIN + i * (cardWidth + DASHBOARD_CARD_GAP);
+    uint16_t accentColor = getViewColor(views[i]);
+
+    display.drawRoundRect(cardX, cardTop, cardWidth, cardHeight, 8, accentColor);
+
+    display.setTextSize(2);
+    display.setTextColor(COLOR_TEXT);
+    display.setCursor(cardX + 20, cardTop + 20);
+    display.print(getViewLabel(views[i]));
+
+    String valueText = String(convertForCurrentView(views[i], rawAverages[i]), 1) +
+                        " " + getViewUnit(views[i]);
+
+    display.setTextSize(3);
+    display.setTextColor(accentColor);
+    int textX = cardX + (cardWidth - (int)valueText.length() * 18) / 2;
+    if(textX < cardX + 10) textX = cardX + 10;
+    display.setCursor(textX, cardTop + cardHeight / 2);
+    display.print(valueText);
+  }
+
+  // Restore frame border in case anything touched the edge pixels
   display.drawRect(GRAPH_MARGIN, graphY, graphWidth, graphHeight, COLOR_TEXT);
 }
 
